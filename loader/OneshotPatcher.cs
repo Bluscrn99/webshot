@@ -16,7 +16,12 @@ public partial class OneshotPatcher
 	{
 		try
 		{
-			Patch("/libsdl/OneShot/OneShotMG.exe", "/libsdl/OneShot.dll");
+            if (File.Exists("/libsdl/OneShot/OneShotMGMac.dll")) {
+                Console.WriteLine("Mac version detected");
+                Patch("/libsdl/OneShot/OneShotMGMac.dll", "/libsdl/OneShot.dll");
+            } else {
+			    Patch("/libsdl/OneShot/OneShotMG.exe", "/libsdl/OneShot.dll");
+            }
 		} catch (Exception e)
 		{
             Console.Error.WriteLine("Error in Patch()!");

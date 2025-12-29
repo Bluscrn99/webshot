@@ -54,8 +54,15 @@ let GAMEDATA_FOLDERS = ["autotiles", "loc", "maps", "music", "music_effects", "s
 let CONTENT_FOLDERS = ["autotiles", "facepics", "fogs", "footprints", "glyphs", "item_icons", "lightmaps", "npc", "panoramas", "partner_logos", "pictures", "shaders", "the_world_machine", "tilesets", "titles", "transitions", "ui"];
 export async function verifyGameFolder(folder: FileSystemDirectoryHandle): Promise<boolean> {
 	try {
-		console.debug("[verifyGameFolder] verifying OneShotMG.exe");
-		await folder.getFileHandle("OneShotMG.exe");
+
+		try {
+			console.debug("[verifyGameFolder] verifying OneShotMGMac.dll");
+			await folder.getFileHandle("OneShotMGMac.dll");
+		} catch {
+			console.debug("[verifyGameFoler] Uploaded game is not the Mac version, checking for Windows version");
+			console.debug("[verifyGameFolder] verifying OneShotMG.exe");
+			await folder.getFileHandle("OneShotMG.exe");
+		}
 
 		console.debug("[verifyGameFolder] verifying content");
 		let content = await folder.getDirectoryHandle("content");
@@ -85,7 +92,13 @@ export async function copyGame(folder: FileSystemDirectoryHandle, callback: (per
 	let call = () => { current++; callback(current / total) };
 
 	call();
-	await copyFile(await folder.getFileHandle("OneShotMG.exe"), game);
+	
+	try {
+		await folder.getFileHandle("OneShotMGMac.dll");
+		await copyFile(await folder.getFileHandle("OneShotMGMac.dll"), game);
+	} catch {
+		await copyFile(await folder.getFileHandle("OneShotMG.exe"), game);
+	}
 	call();
 	await copyFolder(content, game, call);
 	await copyFolder(gamedata, game, call);
