@@ -1,6 +1,12 @@
 STATICS_RELEASE=7ad64c04-3e1e-4daf-b717-c6c662a2eb66
 DOTNETFLAGS=--nodereuse:false -v n
 
+ifeq ($(shell uname -s),Darwin)
+	SED=gsed
+else
+	SED=sed
+endif
+
 statics:
 	mkdir statics
 	wget https://github.com/r58Playz/FNA-WASM-Build/releases/download/$(STATICS_RELEASE)/SDL2.a -O statics/libSDL2.a
@@ -41,12 +47,13 @@ build: deps
 	NUGET_PACKAGES="$(shell realpath .)/nuget" dotnet publish loader -c Release $(DOTNETFLAGS)
 #
 	cp -r loader/bin/Release/net10.0/publish/wwwroot/_framework frontend/public/
+
 	# emscripten sucks
-	sed -i 's/var offscreenCanvases \?= \?{};/var offscreenCanvases={};if(globalThis.window\&\&!window.TRANSFERRED_CANVAS){transferredCanvasNames=[".canvas"];window.TRANSFERRED_CANVAS=true;}/' frontend/public/_framework/dotnet.native.*.js
+	$(SED) -i 's/var offscreenCanvases \?= \?{};/var offscreenCanvases={};if(globalThis.window\&\&!window.TRANSFERRED_CANVAS){transferredCanvasNames=[".canvas"];window.TRANSFERRED_CANVAS=true;}/' frontend/public/_framework/dotnet.native.*.js
 	# dotnet messed up
-	sed -i 's/this.appendULeb(32768)/this.appendULeb(65535)/' frontend/public/_framework/dotnet.runtime.*.js
+	$(SED) -i 's/this.appendULeb(32768)/this.appendULeb(65535)/' frontend/public/_framework/dotnet.runtime.*.js
 	# fmod messed up
-	sed -i 's/return runEmAsmFunction(code, sigPtr, argbuf);/return runMainThreadEmAsm(code, sigPtr, argbuf, 1);/' frontend/public/_framework/dotnet.native.*.js
+	$(SED) -i 's/return runEmAsmFunction(code, sigPtr, argbuf);/return runMainThreadEmAsm(code, sigPtr, argbuf, 1);/' frontend/public/_framework/dotnet.native.*.js
 
 serve: build
 	cd frontend && pnpm dev
