@@ -23,7 +23,7 @@
 		<WasmEnableSIMD>true</WasmEnableSIMD>
 		<WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
 		<WasmEnableWebcil>false</WasmEnableWebcil>
-		<WasmRunWasmOpt>false</WasmRunWasmOpt>
+		<WasmRunWasmOpt>true</WasmRunWasmOpt>
 
 		<WasmBitcodeCompileOptimizationFlag>-O3</WasmBitcodeCompileOptimizationFlag>
 		<WasmNativeStrip>false</WasmNativeStrip>
