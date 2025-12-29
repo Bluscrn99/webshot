@@ -120,6 +120,8 @@ public static partial class OneshotLoader
             var GraphicsDevice = MonoGame_Framework.GetType("Microsoft.Xna.Framework.Graphics.GraphicsDevice");
             GraphicsDevice_DisposeContexts = GraphicsDevice.GetMethod("DisposeContexts", BindingFlags.NonPublic | BindingFlags.Static);
 
+			Game.Window.Title = "OneShot";
+
             return Task.Delay(0);
         }
         catch (Exception e)

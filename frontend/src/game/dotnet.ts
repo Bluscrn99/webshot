@@ -7,10 +7,12 @@ const SEAMLESSCOUNT = 10;
 export type Log = { color: string; log: string };
 export const gameState: Stateful<{
 	ready: boolean;
+	assetsReady: boolean;
 	initting: boolean;
 	playing: boolean;
 }> = createState({
 	ready: false,
+	assetsReady: false,
 	initting: false,
 	playing: false,
 });

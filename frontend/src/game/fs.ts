@@ -1,3 +1,5 @@
+import { gameState } from "./dotnet";
+
 export const rootFolder = await navigator.storage.getDirectory();
 
 export async function copyFile(
@@ -104,3 +106,5 @@ export async function wasPatched(): Promise<boolean> {
 		return false;
 	}
 }
+
+gameState.assetsReady = await wasGameCopied() && await wasPatched();

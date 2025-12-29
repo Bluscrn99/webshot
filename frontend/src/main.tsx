@@ -1,34 +1,53 @@
-import { createDelegate } from "dreamland/core";
+import { Component, createDelegate, css } from "dreamland/core";
 import { GameView } from "./game";
-import { patch } from "./game/dotnet";
-import { copyGame, wasPatched, wasGameCopied } from "./game/fs";
+import { StickyNote } from "./splash";
+import { settings } from "./store";
 
-let hasGame = await wasGameCopied();
-console.log("has game", hasGame);
+let App: Component<{}, { showSplash: boolean }> = function (cx) {
+	let preinit = createDelegate<void>();
 
-let hasPatch = await wasPatched();
-console.log("has patch", hasPatch);
+	let firstSplash = true;
 
-if (!hasGame) {
-	await new Promise<void>(r => {
-		let handler = async () => {
-			let dir = await showDirectoryPicker();
+	let init = () => {
+		if (firstSplash) preinit();
+		firstSplash = false;
+		this.showSplash = false;
+	};
 
-			await copyGame(dir, x => console.log("copy percent:", x));
+	this.showSplash = settings.name === "";
+	if (!this.showSplash) init();
 
-			r();
-			window.removeEventListener("click", handler);
-		};
-		window.addEventListener("click", handler);
-	});
+	return (
+		<div id="app">
+			{use(this.showSplash).andThen(
+				<div class="splash">
+					<StickyNote done={init} />
+				</div>
+			)}
+			<GameView preinit={preinit} showSplash={use(this.showSplash)} />;
+		</div>
+	)
 }
+App.style = css`
+	:scope {
+		width: 100%;
+		height: 100%;
 
-if (!hasPatch) {
-	await patch();
-}
+		position: relative;
+		overflow: hidden;
+	}
 
-let preinit = createDelegate<void>();
-let canvas = <GameView preinit={preinit} />;
-document.querySelector("#app")?.replaceWith(canvas);
+	.splash {
+		position: absolute;
+		z-index: 100;
+		inset: 0;
 
-preinit();
+		backdrop-filter: blur(10px);
+
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+`;
+
+document.querySelector("#app")?.replaceWith(<App />);
