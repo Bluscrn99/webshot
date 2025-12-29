@@ -1,5 +1,6 @@
 import { Component, createDelegate, css } from "dreamland/core";
 import { GameView } from "./game";
+import "./index.css"
 
 let App: Component = function () {
 	let preinit = createDelegate<void>();

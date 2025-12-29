@@ -8,18 +8,100 @@ type SetupStep = "none" | "welcome" | "insert-disk" | "copying" | "name";
 
 let InsertDiskScreen: Component = function () {
 	return (
-		<div>
-			<div>Please insert World Machine OS disk.</div>
-			<div>You can obtain the disk through <a href="https://store.steampowered.com/app/2915460/OneShot_World_Machine_Edition/" target="_blank">your local Valve Software location.</a></div>
+		<div class="setup-screen">
+			<Header text="World Machine Setup" />
+			<div class="setup-content">
+				<p>Please insert the World Machine OS disk into Drive A:</p>
+			</div>
+			<GenericFooter />
 		</div>
 	)
 }
 
+InsertDiskScreen.style = css`
+	p {
+		max-width: 15rem;
+		text-align: center;
+	}
+
+	.setup-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+	}
+`
+
+let Header: Component<{ text: string }> = function () {
+	return (
+		<div class="header">{this.text}</div>
+	)
+}
+
+Header.style = css`
+	:scope {
+		border-bottom: 4px double var(--oneshot);
+		padding: .25rem;
+		padding-left: 1rem;
+		padding-top: .5rem;
+		width: max-content;
+	}
+`
+
+let GenericFooter : Component<{status: string}> = function() {
+	return (
+		<div class="footer">{this.status}</div>
+	)
+}
+
+GenericFooter.style = css`
+	:scope {
+		border-top: 1px solid var(--oneshot);
+		padding: 0.25rem;
+		padding-inline: 0.5rem;
+		width: 100%;
+		min-height: 2rem;
+	}
+`
+
+let CopyFooter : Component<{status: string}> = function() {
+	return (
+		<div class="footer"><div class="message">{this.status}</div></div>
+	)
+}
+
+CopyFooter.style = css`
+	:scope {
+		border-top: 1px solid var(--oneshot);
+		width: 100%;
+		min-height: 2rem;
+		padding: .25rem;
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	.message {
+		border-left: 1px solid var(--oneshot);
+		padding-inline: 0.5rem;
+	}
+`
+
 let WelcomeScreen: Component<{ next: () => void }> = function () {
 	return (
-		<div>
-			<div>Welcome to World Machine</div>
-			<button on:click={this.next}>Continue</button>
+		<div class="setup-screen">
+			<Header text="World Machine Setup" />
+			<div class="setup-content">
+			<b>Welcome to Setup.</b>
+			<p>The Setup program for the TWM Labs World Machine operating system prepares World Machine to run on your computer.</p>
+			<ul>
+			<li>To learn more about Setup before continuing, refer to the attached notes.</li>
+			<li>To set up World Machine now, click the Continue button.</li>
+			<li>To quit Setup without installing World Machine, press Ctrl+W.</li>
+			</ul>
+			<br />
+			<button class="setup-button" on:click={this.next}>Continue</button>
+			</div>
+			<GenericFooter status="Ctrl+W=Exit" />
 		</div>
 	)
 }
@@ -35,7 +117,9 @@ let NameEntryScreen: Component<{ next: () => void }, { nameInput: string }> = fu
 	};
 
 	return (
-		<div>
+		<div class="setup-screen">
+			<Header text="World Machine Setup" />
+			<div class="setup-content">
 			<div>Enter the name of this machine's owner:</div>
 			<input 
 				placeholder="Your name..." 
@@ -45,23 +129,81 @@ let NameEntryScreen: Component<{ next: () => void }, { nameInput: string }> = fu
 			<button on:click={submit} disabled={use(this.nameInput).map(n => !n.trim())}>
 				Continue
 			</button>
+			</div>
 		</div>
 	)
 }
 
 let CopyingScreen: Component<{ progress: number, patching: boolean }> = function () {
 	return (
-		<div class="copying-overlay">
-			<div>Installing World Machine</div>
-			<div class="progress">
-				<div class="progress-inner">
-					<div class="bar" class:patching={use(this.patching)} style={{ "--progress": use(this.progress) }} />
+		// <div class="copying-overlay">
+		// 	<div>Installing World Machine</div>
+		// 	<div class="progress">
+		// 		<div class="progress-inner">
+		// 			<div class="bar" class:patching={use(this.patching)} style={{ "--progress": use(this.progress) }} />
+		// 		</div>
+		// 	</div>
+		// 	<div class="tiny">Do not close the tab</div>
+		// </div>
+		<div class="setup-screen">
+			<Header text="World Machine Setup" />
+			<div class="setup-content">
+				<div class="inner-content">
+				<p>Please wait while Setup copies files to the World Machine installation folders.<br />Please do not exit this screen until the process is complete.</p>
+				<br />
+				<div class="box">
+					<span>Setup is copying files...</span>
+					<p>{use(this.progress).map(p => Math.floor(p * 100))}%</p>
+					<div class="progress-bar">
+						<div class="progress-fill" style={{ width: use`calc(${this.progress}*100%)` }}></div>
+					</div>
+				</div>
 				</div>
 			</div>
-			<div class="tiny">Do not close the tab</div>
+			<CopyFooter status={use(this.patching).map(p => p ? "Applying patches..." : "Copying files...")} />
 		</div>
 	)
 }
+
+CopyingScreen.style = css`
+	p {
+		text-align: center;
+		margin: .5rem;
+	}
+	.setup-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 1rem;
+	}
+	.inner-content {
+		max-width: 40rem;
+	}
+
+	.box {
+		border: 4px double var(--oneshot);
+		padding: 1rem;
+	}
+
+	.progress-bar {
+		width: 100%;
+		height: 2rem;
+		border: 2px solid var(--oneshot);
+		background: #000;
+		margin-top: 0.25rem;
+
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+	}
+
+	.progress-fill {
+		height: 100%;
+		background: var(--oneshot);
+	}
+`
+
 
 let SetupOverlay: Component<{ step: SetupStep, progress: number, patching: boolean, onWelcomeNext: () => void, onNameNext: () => void }> = function () {
 	return (
@@ -70,17 +212,19 @@ let SetupOverlay: Component<{ step: SetupStep, progress: number, patching: boole
 			{use(this.step).map(s => s === "insert-disk").andThen(<InsertDiskScreen />)}
 			{use(this.step).map(s => s === "copying").andThen(<CopyingScreen progress={use(this.progress)} patching={use(this.patching)} />)}
 			{use(this.step).map(s => s === "name").andThen(<NameEntryScreen next={this.onNameNext} />)}
+			{/* <CopyingScreen progress={10} patching={use(this.patching)} /> */}
 		</div>
 	)
 }
 SetupOverlay.style = css`
 	:scope {
+		position: absolute;
+		inset: 0;
 		background: #000;
 		color: var(--oneshot);
-		width: 100%;
-		height: 100%;
-		padding: 1rem;
 		font-size: 1.25rem;
+		display: flex;
+		z-index: 10;
 	}
 `;
 
@@ -220,8 +364,8 @@ StickyNoteWidget.style = css`
 
 	:scope.expanded .backdrop {
 		pointer-events: auto;
-		backdrop-filter: blur(10px);
-		background: rgba(0, 0, 0, 0.3);
+		backdrop-filter: blur(1px);
+		background: rgba(0, 0, 0, 0.15);
 	}
 
 	.sticky-note {
@@ -368,6 +512,7 @@ GameView.style = css`
 
 		border-radius: 4px;
 		overflow: hidden;
+		position: relative;
 	}
 	.canvas-wrapper {
 		--height: min(calc(calc(100vw - 2rem) * 9 / 16), calc(100vh - 6rem));

@@ -21,7 +21,7 @@ export let StickyNote: Component<{ done: () => void }> = function () {
 				You will need to own the game and have it downloaded to play this port. The source is available on <a href={GITHUB} target="_blank">GitHub</a>.
 			</p>
 			<p>
-				Machine Owned By: <span style="font-family: 'Comic Neue', 'Comic Sans MS', cursive, sans-serif; font-style: italic;">{use(settings.name)}</span>
+				Machine Owned By: <span style="font-family: var(--font-script); font-style: italic;">{use(settings.name)}</span>
 			</p>
 			<div class="exit"><button on:click={handleClose}><span>[</span> CLOSE <span>]</span></button></div>
 		</div>
