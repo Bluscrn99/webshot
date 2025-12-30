@@ -93,7 +93,7 @@ export async function verifyGameFolder(folder: FileSystemDirectoryHandle): Promi
 	}
 }
 
-export async function copyGame(folder: FileSystemDirectoryHandle, callback: (percent: number) => void) {
+export async function copyGame(folder: FileSystemDirectoryHandle, callback: (percent: number, file: string) => void) {
 	if (!await verifyGameFolder(folder)) {
 		throw new Error("Invalid game folder");
 	}
@@ -104,9 +104,9 @@ export async function copyGame(folder: FileSystemDirectoryHandle, callback: (per
 
 	let current = -1;
 	let total = 1 + await countFolder(content) + await countFolder(gamedata);
-	let call = () => { current++; callback(current / total) };
+	let call = (name: string) => { current++; callback(current / total, name) };
 
-	call();
+	call("");
 	
 	try {
 		await folder.getFileHandle("OneShotMGMac.dll");
@@ -114,7 +114,7 @@ export async function copyGame(folder: FileSystemDirectoryHandle, callback: (per
 	} catch {
 		await copyFile(await folder.getFileHandle("OneShotMG.exe"), game);
 	}
-	call();
+	call("OneShotMG");
 	await copyFolder(content, game, call);
 	await copyFolder(gamedata, game, call);
 }

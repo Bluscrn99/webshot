@@ -1,6 +1,6 @@
 import { Component, css, Delegate } from "dreamland/core";
 import { gameState, patch, preInit, run } from "./dotnet";
-import { copyGame, wasGameCopied, wasPatched, setSourceFolder, getSourceFolder, verifyGameFolder } from "./fs";
+import { copyGame, wasGameCopied, wasPatched, setSourceFolder, getSourceFolder, verifyGameFolder, hasSourceFolder } from "./fs";
 import { StickyNote } from "../splash";
 import { settings } from "../store";
 
@@ -50,7 +50,7 @@ Header.style = css`
 
 let GenericFooter : Component<{status: string}> = function() {
 	return (
-		<div class="footer">{this.status}</div>
+		<div class="footer">{use(this.status)}</div>
 	)
 }
 
@@ -66,7 +66,7 @@ GenericFooter.style = css`
 
 let CopyFooter : Component<{status: string}> = function() {
 	return (
-		<div class="footer"><div class="message">{this.status}</div></div>
+		<div class="footer"><div class="message">{use(this.status)}</div></div>
 	)
 }
 
@@ -139,7 +139,7 @@ let NameEntryScreen: Component<{ next: () => void }, { nameInput: string }> = fu
 	)
 }
 
-let CopyingScreen: Component<{ progress: number, patching: boolean }> = function () {
+let CopyingScreen: Component<{ progress: number, patching: boolean, currentFile: string }> = function () {
 	return (
 		// <div class="copying-overlay">
 		// 	<div>Installing World Machine</div>
@@ -157,15 +157,22 @@ let CopyingScreen: Component<{ progress: number, patching: boolean }> = function
 				<p>Please wait while Setup copies files to the World Machine installation folders.<br />Please do not exit this screen until the process is complete.</p>
 				<br />
 				<div class="box">
-					<span>Setup is copying files...</span>
-					<p>{use(this.progress).map(p => Math.floor(p * 100))}%</p>
-					<div class="progress-bar">
-						<div class="progress-fill" style={{ width: use`calc(${this.progress}*100%)` }}></div>
-					</div>
+					{use(this.patching).andThen((
+					<p>Preparing...</p>
+					), (
+					<>
+						<span>Setup is copying files...</span>
+						<p>{use(this.progress).map(p => Math.floor(p * 100))}%</p>
+						<div class="progress-bar">
+							<div class="progress-fill" style={{ width: use`calc(${this.progress}*100%)` }}></div>
+						</div>
+					</>
+					))}
 				</div>
 				</div>
 			</div>
-			<CopyFooter status={use(this.patching).map(p => p ? "Applying patches..." : "Copying files...")} />
+			{/* @ts-ignore works well enough 👍 */}
+			{use(this.patching).andThen(<CopyFooter status="Applying patches..." />, <CopyFooter status={use`Copying: ${this.currentFile}`} />)}
 		</div>
 	)
 }
@@ -210,12 +217,12 @@ CopyingScreen.style = css`
 `
 
 
-let SetupOverlay: Component<{ step: SetupStep, progress: number, patching: boolean, onWelcomeNext: () => void, onNameNext: () => void }> = function () {
+let SetupOverlay: Component<{ step: SetupStep, progress: number, patching: boolean, currentFile: string, onWelcomeNext: () => void, onNameNext: () => void }> = function () {
 	return (
 		<div class="setup-overlay">
 			{use(this.step).map(s => s === "welcome").andThen(<WelcomeScreen next={this.onWelcomeNext} />)}
 			{use(this.step).map(s => s === "insert-disk").andThen(<InsertDiskScreen />)}
-			{use(this.step).map(s => s === "copying").andThen(<CopyingScreen progress={use(this.progress)} patching={use(this.patching)} />)}
+			{use(this.step).map(s => s === "copying").andThen(<CopyingScreen progress={use(this.progress)} patching={use(this.patching)} currentFile={use(this.currentFile)} />)}
 			{use(this.step).map(s => s === "name").andThen(<NameEntryScreen next={this.onNameNext} />)}
 			{/* <CopyingScreen progress={10} patching={use(this.patching)} /> */}
 		</div>
@@ -402,13 +409,14 @@ StickyNoteWidget.style = css`
 	}
 `;
 
-export let GameView: Component<{ preinit: Delegate<void> }, { setupStep: SetupStep, copyProgress: number, patching: boolean }> = function () {
+export let GameView: Component<{ preinit: Delegate<void> }, { setupStep: SetupStep, copyProgress: number, patching: boolean, currentFile: string }> = function () {
 	this.preinit.listen(async () => {
 		await preInit();
 	})
 	this.setupStep = "none";
 	this.copyProgress = 0;
 	this.patching = false;
+	this.currentFile = "";
 
 	let insertDisk = async () => {
 		let folder = await showDirectoryPicker();
@@ -427,10 +435,11 @@ export let GameView: Component<{ preinit: Delegate<void> }, { setupStep: SetupSt
 	let startCopying = async () => {
 		this.setupStep = "copying";
 		this.copyProgress = 0;
+		this.currentFile = "";
 
 		let folder = getSourceFolder()!;
 		try {
-			await copyGame(folder, x => this.copyProgress = x);
+			await copyGame(folder, (x, file) => { this.copyProgress = x; this.currentFile = file; });
 		} catch (err) {
 			alert("There was an error while copying: " + (err as any).message);
 			this.setupStep = "none";
@@ -465,7 +474,12 @@ export let GameView: Component<{ preinit: Delegate<void> }, { setupStep: SetupSt
 	};
 
 	let onNameNext = async () => {
-		this.setupStep = "insert-disk";
+		// If disk already inserted, skip to copying
+		if (hasSourceFolder()) {
+			await startCopying();
+		} else {
+			this.setupStep = "insert-disk";
+		}
 	};
 
 	return (
@@ -476,6 +490,7 @@ export let GameView: Component<{ preinit: Delegate<void> }, { setupStep: SetupSt
 						step={use(this.setupStep)} 
 						progress={use(this.copyProgress)} 
 						patching={use(this.patching)}
+						currentFile={use(this.currentFile)}
 						onWelcomeNext={onWelcomeNext}
 						onNameNext={onNameNext}
 					/>
