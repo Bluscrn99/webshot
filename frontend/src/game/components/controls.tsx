@@ -47,7 +47,7 @@ PlayButton.style = css`
 export let CopyAssetsSlot: Component<{ insertDisk: () => void }> = function () {
 	return (
 		<button on:click={this.insertDisk} disabled={use(gameState.playing)}>
-			World Machine OS
+			{use(gameState.diskInserted).map(inserted => inserted ? "Disk Inserted" : "Insert a Disk")}
 			<div class="led" class:blinking={use(gameState.diskInserted).map(x => !x)} />
 		</button>
 	)
@@ -59,6 +59,8 @@ CopyAssetsSlot.style = css`
 		color: var(--button-fg);
 		border: none;
 		border-radius: 8px;
+
+		cursor: pointer;
 
 		display: flex;
 		gap: 0.5rem;

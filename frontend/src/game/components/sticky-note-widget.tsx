@@ -50,7 +50,7 @@ StickyNoteWidget.style = css`
 	.sticky-note {
 		position: fixed;
 		bottom: 1rem;
-		left: 19rem;
+		left: 17rem;
 		width: 30rem;
 		height: 30rem;
 		cursor: pointer;
