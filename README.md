@@ -1,7 +1,7 @@
-# webshot (for game sites)
+# webshot
 
 a fork of webshot, which is on its own a port of Oneshot: World Machine Edition to webassembly.
-changed to be easier to add to your game site
+changed to be easier to add to a game site
 
 > [!IMPORTANT]
 > i am stupid, and know nothing about vite or .NET or port development.
